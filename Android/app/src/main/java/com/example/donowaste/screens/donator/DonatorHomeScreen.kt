@@ -2,39 +2,33 @@ package com.example.donowaste.screens.donator
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 
 @Composable
 fun DonatorHomeScreen(navController: NavController) {
-    // TODO: Add "Donations" and "Pickup" buttons
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
-        Button(onClick = { navController.navigate("create_package")}) {
-            Text(text = "Donate")
+        Button(onClick = { navController.navigate("create_package_page") }) {
+            Text("Donate")
         }
-        Button(onClick = { navController.navigate("recipients")}) {
-            Text(text = "Recipients")
+        Spacer(modifier = Modifier.height(8.dp))
+        Button(onClick = { navController.navigate("recipient_page") }) {
+            Text("Recipients")
         }
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    DonatorHomeScreen(navController = rememberNavController())
 }

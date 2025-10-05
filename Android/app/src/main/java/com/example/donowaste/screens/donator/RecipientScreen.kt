@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 
-// Dummy data for previewing the list
+// Data class for the package information
 data class DonatedPackage(val id: String, val contents: String, val recipient: String)
 
 @OptIn(ExperimentalMaterial3Api::class)

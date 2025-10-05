@@ -40,10 +40,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import com.example.donowaste.data.DonationsRepository
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.donowaste.data.UsersRepository
 import com.example.donowaste.models.UserProfile
-import com.example.donowaste.navigation.AppNavigation
+import com.example.donowaste.screens.donatee.DonateeHomeScreen
+import com.example.donowaste.screens.donatee.DonationsScreen
+import com.example.donowaste.screens.donatee.PackageScreen
+import com.example.donowaste.screens.donatee.PickupScreen
+import com.example.donowaste.screens.donator.CreateItemScreen
+import com.example.donowaste.screens.donator.CreatePackageScreen
+import com.example.donowaste.screens.donator.DonatorHomeScreen
+import com.example.donowaste.screens.donator.RecipientScreen
 import com.example.donowaste.ui.RoleSelectionScreen
 import com.example.donowaste.ui.theme.DonoWasteTheme
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -106,9 +115,9 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppNavigator(
-    usersRepo: UsersRepository = UsersRepository(),
     onRequestGoogleSignIn: () -> Unit
 ) {
+    val usersRepo = remember { UsersRepository() }
     val mainActivity = (LocalContext.current as? MainActivity)
     val auth = Firebase.auth
     val snackbarHostState = remember { SnackbarHostState() }
@@ -128,14 +137,12 @@ fun AppNavigator(
 
     mainActivity?.SetSignInSuccessHandler { idToken ->
         scope.launch {
-            isLoading = true
             try {
                 val credential = GoogleAuthProvider.getCredential(idToken, null)
                 auth.signInWithCredential(credential).await()
             } catch (e: Exception) {
                 Log.e("AppNavigator", "Firebase sign-in failed", e)
                 snackbarHostState.showSnackbar(e.message ?: "Google Sign-In failed.")
-                isLoading = false
             }
         }
     }
@@ -300,49 +307,58 @@ fun LoginScreen(
 @Composable
 fun MainAppContent(
     userProfile: UserProfile,
-    onSwitchRole: () -> Unit,
-    donationsRepo: DonationsRepository = DonationsRepository()
+    onSwitchRole: () -> Unit
 ) {
-    val scope = rememberCoroutineScope()
     val context = LocalContext.current
+    val navController = rememberNavController()
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(24.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Welcome, ${userProfile.displayName}!", style = MaterialTheme.typography.titleLarge)
-        Text("Your role: ${userProfile.role}", style = MaterialTheme.typography.bodyMedium)
-
-        Spacer(Modifier.height(16.dp))
-
-        Button(onClick = onSwitchRole) {
-            Text(text = "Switch to ${if (userProfile.role == "donor") "Donatee" else "Donor"}")
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text("Welcome, ${userProfile.displayName}!", style = MaterialTheme.typography.titleLarge)
+                Text("Your role: ${userProfile.role}", style = MaterialTheme.typography.bodyMedium)
+            }
+            Button(onClick = onSwitchRole) {
+                Text(text = "Switch to ${if (userProfile.role == "donor") "Donatee" else "Donor"}")
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                onClick = {
+                    Firebase.auth.signOut()
+                    val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).build()
+                    GoogleSignIn.getClient(context, gso).signOut()
+                },
+                colors = ButtonDefaults.outlinedButtonColors()
+            ) {
+                Text("Sign Out")
+            }
         }
 
         Spacer(Modifier.height(16.dp))
 
-        Button(
-            onClick = {
-                Firebase.auth.signOut()
-                val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).build()
-                GoogleSignIn.getClient(context, gso).signOut()
-            },
-            colors = ButtonDefaults.outlinedButtonColors()
-        ) {
-            Text("Sign Out")
-        }
+        val startDestination = if (userProfile.role == "donor") "donator_home" else "donatee_home"
 
-        Spacer(Modifier.height(32.dp))
+        NavHost(navController = navController, startDestination = startDestination) {
+            // Donatee Flow
+            composable("donatee_home") { DonateeHomeScreen(navController) }
+            composable("donations_page") { DonationsScreen() }
+            composable("pickup_page") { PickupScreen() }
+            composable("package_page/{packageId}") { backStackEntry ->
+                PackageScreen(
+    //                navController = navController,
+    //                packageId = backStackEntry.arguments?.getString("packageId")
+                )
+            }
 
-        if (userProfile.role == "donor") {
-            AppNavigation(userProfile = userProfile) // Embed the navigation for the donor
-        }
-
-        if (userProfile.role == "donatee") {
-            Text("Donations will appear here for you to claim.", style = MaterialTheme.typography.bodyLarge)
+            // Donator Flow
+            composable("donator_home") { DonatorHomeScreen(navController) }
+            composable("recipient_page") { RecipientScreen(navController) }
+            composable("create_package_page") { CreatePackageScreen(navController) }
+            composable("create_item_page") { CreateItemScreen(navController) }
         }
     }
 }

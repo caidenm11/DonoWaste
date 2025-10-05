@@ -1,20 +1,18 @@
 package com.example.donowaste.screens.donator
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -26,34 +24,40 @@ import androidx.navigation.compose.rememberNavController
 fun CreatePackageScreen(navController: NavController) {
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Create Donation Package") })
-        },
-        floatingActionButton = {
-            FloatingActionButton(onClick = { navController.navigate("create_item") }) {
-                Icon(Icons.Default.Add, contentDescription = "Add item")
-            }
+            TopAppBar(title = { Text("Create a Package") })
         }
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(16.dp)
         ) {
-            Text("Items in your package:")
-            // This will be replaced with a list of items
+            // This would typically list the items added to the package
             LazyColumn(modifier = Modifier.weight(1f)) {
-                // For now, it's empty. We'll add items here later.
-                item {
-                    Text("Your package is empty. Add items using the '+' button.")
-                }
+                // Placeholder for item list
+                item { Text("Items in this package will appear here.") }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             Button(
-                onClick = { /* TODO: Implement package submission logic */ },
-                modifier = Modifier.padding(top = 16.dp)
+                onClick = { navController.navigate("create_item_page") },
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Submit Package")
+                Text("Add an Item")
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Button(
+                onClick = {
+                    // TODO: Finalize package and send to recipients
+                    navController.popBackStack() // Go back to the main donor screen
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Send to Recipients")
             }
         }
     }
