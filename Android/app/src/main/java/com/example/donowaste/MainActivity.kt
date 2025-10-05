@@ -352,11 +352,10 @@ fun MainAppContent(
             // Donatee Flow
             composable("donatee_home") { DonateeHomeScreen(navController) }
             composable("donations_page") { DonationsScreen() }
-            composable("pickup_page") { PickupScreen() }
+            composable("pickup_page") { PickupScreen(navController) }
             composable("package_page/{packageId}") { backStackEntry ->
                 PackageScreen(
-    //                navController = navController,
-    //                packageId = backStackEntry.arguments?.getString("packageId")
+                    packageId = backStackEntry.arguments?.getString("packageId")
                 )
             }
 
