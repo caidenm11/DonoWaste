@@ -20,6 +20,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -315,26 +316,31 @@ fun MainAppContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
+            .padding(horizontal = 24.dp, vertical = 12.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text("Welcome, ${userProfile.displayName}!", style = MaterialTheme.typography.titleLarge)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+                Text("Welcome,", style = MaterialTheme.typography.titleLarge)
+                Text(userProfile.displayName, style = MaterialTheme.typography.titleLarge)
                 Text("Your role: ${userProfile.role}", style = MaterialTheme.typography.bodyMedium)
             }
-            Button(onClick = onSwitchRole) {
-                Text(text = "Switch to ${if (userProfile.role == "donor") "Donatee" else "Donor"}")
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(
-                onClick = {
-                    Firebase.auth.signOut()
-                    val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).build()
-                    GoogleSignIn.getClient(context, gso).signOut()
-                },
-                colors = ButtonDefaults.outlinedButtonColors()
-            ) {
-                Text("Sign Out")
+            Column(horizontalAlignment = Alignment.End) {
+                Button(onClick = onSwitchRole) {
+                    Text(text = "Switch to ${if (userProfile.role == "donor") "Donatee" else "Donor"}")
+                }
+                OutlinedButton(
+                    onClick = {
+                        Firebase.auth.signOut()
+                        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).build()
+                        GoogleSignIn.getClient(context, gso).signOut()
+                    }
+                ) {
+                    Text("Sign Out")
+                }
             }
         }
 
