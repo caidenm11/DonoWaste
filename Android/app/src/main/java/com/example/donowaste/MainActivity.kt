@@ -18,8 +18,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -99,6 +103,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppNavigator(
     usersRepo: UsersRepository = UsersRepository(),
@@ -106,6 +111,7 @@ fun AppNavigator(
 ) {
     val mainActivity = (LocalContext.current as? MainActivity)
     val auth = Firebase.auth
+    val snackbarHostState = remember { SnackbarHostState() }
     var currentUser by remember { mutableStateOf(auth.currentUser) }
 
     DisposableEffect(auth) {
@@ -128,12 +134,12 @@ fun AppNavigator(
                 auth.signInWithCredential(credential).await()
             } catch (e: Exception) {
                 Log.e("AppNavigator", "Firebase sign-in failed", e)
+                snackbarHostState.showSnackbar(e.message ?: "Google Sign-In failed.")
                 isLoading = false
             }
         }
     }
 
-    // This effect refetches the profile whenever the user changes (signs in/out)
     LaunchedEffect(currentUser) {
         if (currentUser != null) {
             isLoading = true
@@ -141,6 +147,7 @@ fun AppNavigator(
                 userProfile = usersRepo.ensureAndGetUserProfile()
             } catch (e: Exception) {
                 Log.e("AppNavigator", "Failed to get user profile", e)
+                snackbarHostState.showSnackbar(e.message ?: "Failed to load profile.")
             } finally {
                 isLoading = false
             }
@@ -150,83 +157,93 @@ fun AppNavigator(
         }
     }
 
-    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        when {
-            isLoading -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
-            }
-            currentUser == null -> {
-                LoginScreen(
-                    onGoogleSignInClick = onRequestGoogleSignIn,
-                    onEmailSignIn = { email, password ->
-                        scope.launch {
-                            isLoading = true
-                            try {
-                                usersRepo.signInWithEmailPassword(email, password)
-                            } catch (e: Exception) {
-                                Log.e("Auth", "Email sign in failed", e)
-                            } finally {
-                                isLoading = false
-                            }
-                        }
-                    },
-                    onEmailCreateAccount = { email, password ->
-                        scope.launch {
-                            isLoading = true
-                            try {
-                                usersRepo.createUserWithEmailPassword(email, password)
-                            } catch (e: Exception) {
-                                Log.e("Auth", "Email create account failed", e)
-                            } finally {
-                                isLoading = false
-                            }
-                        }
-                    }
-                )
-            }
-            userProfile == null -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Loading Profile...", modifier = Modifier.padding(24.dp))
-                }
-            }
-            userProfile?.role == "both" -> {
-                RoleSelectionScreen { selectedRole ->
-                    scope.launch {
-                        isLoading = true
-                        try {
-                            usersRepo.updateUserRole(selectedRole)
-                            // Refetch profile to get the new role
-                            userProfile = usersRepo.ensureAndGetUserProfile()
-                        } catch (e: Exception) {
-                            Log.e("AppNavigator", "Failed to update role", e)
-                        } finally {
-                            isLoading = false
-                        }
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { paddingValues ->
+        Surface(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            when {
+                isLoading -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
                     }
                 }
-            }
-            else -> {
-                // Pass the user profile and a callback to handle role switching
-                MainAppContent(
-                    userProfile = userProfile!!,
-                    onSwitchRole = {
+                currentUser == null -> {
+                    LoginScreen(
+                        onGoogleSignInClick = onRequestGoogleSignIn,
+                        onEmailSignIn = { email, password ->
+                            scope.launch {
+                                isLoading = true
+                                try {
+                                    usersRepo.signInWithEmailPassword(email, password)
+                                } catch (e: Exception) {
+                                    Log.e("Auth", "Email sign in failed", e)
+                                    snackbarHostState.showSnackbar(e.message ?: "Sign in failed.")
+                                } finally {
+                                    isLoading = false
+                                }
+                            }
+                        },
+                        onEmailCreateAccount = { email, password ->
+                            scope.launch {
+                                isLoading = true
+                                try {
+                                    usersRepo.createUserWithEmailPassword(email, password)
+                                } catch (e: Exception) {
+                                    Log.e("Auth", "Email create account failed", e)
+                                    snackbarHostState.showSnackbar(e.message ?: "Registration failed.")
+                                } finally {
+                                    isLoading = false
+                                }
+                            }
+                        }
+                    )
+                }
+                userProfile == null -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("Loading Profile...", modifier = Modifier.padding(24.dp))
+                    }
+                }
+                userProfile?.role == "both" -> {
+                    RoleSelectionScreen { selectedRole ->
                         scope.launch {
                             isLoading = true
                             try {
-                                val newRole = if (userProfile!!.role == "donor") "donatee" else "donor"
-                                usersRepo.updateUserRole(newRole)
-                                // Re-fetch the profile to update the UI with the new role
+                                usersRepo.updateUserRole(selectedRole)
                                 userProfile = usersRepo.ensureAndGetUserProfile()
                             } catch (e: Exception) {
-                                Log.e("AppNavigator", "Failed to switch role", e)
+                                Log.e("AppNavigator", "Failed to update role", e)
+                                snackbarHostState.showSnackbar(e.message ?: "Role selection failed.")
                             } finally {
                                 isLoading = false
                             }
                         }
                     }
-                )
+                }
+                else -> {
+                    MainAppContent(
+                        userProfile = userProfile!!,
+                        onSwitchRole = {
+                            scope.launch {
+                                isLoading = true
+                                try {
+                                    val newRole = if (userProfile!!.role == "donor") "donatee" else "donor"
+                                    usersRepo.updateUserRole(newRole)
+                                    userProfile = usersRepo.ensureAndGetUserProfile()
+                                } catch (e: Exception) {
+                                    Log.e("AppNavigator", "Failed to switch role", e)
+                                    snackbarHostState.showSnackbar(e.message ?: "Role switch failed.")
+                                } finally {
+                                    isLoading = false
+                                }
+                            }
+                        }
+                    )
+                }
             }
         }
     }
@@ -242,7 +259,9 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -278,7 +297,6 @@ fun LoginScreen(
     }
 }
 
-// MainAppContent now needs the onSwitchRole callback
 @Composable
 fun MainAppContent(
     userProfile: UserProfile,
@@ -289,7 +307,9 @@ fun MainAppContent(
     val context = LocalContext.current
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -298,22 +318,17 @@ fun MainAppContent(
 
         Spacer(Modifier.height(16.dp))
 
-        // This button now uses the hoisted callback
         Button(onClick = onSwitchRole) {
             Text(text = "Switch to ${if (userProfile.role == "donor") "Donatee" else "Donor"}")
         }
-        
+
         Spacer(Modifier.height(16.dp))
 
         Button(
             onClick = {
-                // Sign out from Firebase
                 Firebase.auth.signOut()
-
-                // Also sign out from Google to allow account switching
                 val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).build()
-                val googleSignInClient = GoogleSignIn.getClient(context, gso)
-                googleSignInClient.signOut()
+                GoogleSignIn.getClient(context, gso).signOut()
             },
             colors = ButtonDefaults.outlinedButtonColors()
         ) {
@@ -323,16 +338,7 @@ fun MainAppContent(
         Spacer(Modifier.height(32.dp))
 
         if (userProfile.role == "donor") {
-            Button(onClick = {
-                scope.launch {
-                    donationsRepo.createDonation(title = "Test Donation", category = "Test")
-                    // Note: This creates the donation but doesn't show it.
-                    // We need to build the donation feed screen to see the result.
-                    Log.d("MainAppContent", "Donation creation attempted. Check Firestore.")
-                }
-            }, modifier = Modifier.fillMaxWidth()) {
-                Text("Create a Donation")
-            }
+            AppNavigation(userProfile = userProfile) // Embed the navigation for the donor
         }
 
         if (userProfile.role == "donatee") {
