@@ -326,7 +326,7 @@ fun MainAppContent(
             Column {
                 Text("Welcome,", style = MaterialTheme.typography.titleLarge)
                 Text(userProfile.displayName, style = MaterialTheme.typography.titleLarge)
-                Text("Your role: ${userProfile.role}", style = MaterialTheme.typography.bodyMedium)
+                Text(userProfile.role, style = MaterialTheme.typography.bodyMedium)
             }
             Column(horizontalAlignment = Alignment.End) {
                 Button(onClick = onSwitchRole) {
