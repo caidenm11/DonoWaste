@@ -1,12 +1,31 @@
 package com.example.donowaste.navigation
 
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.donowaste.models.UserProfile
+import com.example.donowaste.screens.donator.CreateItemScreen
+import com.example.donowaste.screens.donator.CreatePackageScreen
+import com.example.donowaste.screens.donator.DonatorHomeScreen
+import com.example.donowaste.screens.donator.RecipientScreen
 
 @Composable
 fun AppNavigation(userProfile: UserProfile) {
-    // You can now use the userProfile object to make decisions in your navigation
-    // For example, you could show different start destinations based on the user's role.
-    Text(text = "Main App Content for ${userProfile.displayName}")
+    val navController = rememberNavController()
+
+    NavHost(navController = navController, startDestination = "donator_home") {
+        composable("donator_home") {
+            DonatorHomeScreen(navController = navController)
+        }
+        composable("create_package") {
+            CreatePackageScreen(navController = navController)
+        }
+        composable("recipients") {
+            RecipientScreen(navController = navController)
+        }
+        composable("create_item") { // New destination added
+            CreateItemScreen(navController = navController)
+        }
+    }
 }
