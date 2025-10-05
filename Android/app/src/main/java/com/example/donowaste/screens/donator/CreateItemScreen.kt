@@ -64,19 +64,6 @@ fun CreateItemScreen(navController: NavController) {
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Location selection buttons
-            Row {
-                Button(onClick = { /* TODO: Implement location search */ }) {
-                    Text("Search for Location")
-                }
-                Spacer(Modifier.width(8.dp))
-                Button(onClick = { /* TODO: Implement current location */ }) {
-                    Text("Use Current Location")
-                }
-            }
-
             Spacer(modifier = Modifier.weight(1f)) // Pushes the button to the bottom
 
             Button(
