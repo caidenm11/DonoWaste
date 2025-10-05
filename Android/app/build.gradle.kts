@@ -1,8 +1,19 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     id("com.google.gms.google-services")
 
+}
+
+// Read API key from local.properties
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.inputStream().use { stream ->
+        localProperties.load(stream)
+    }
 }
 
 android {
@@ -16,6 +27,8 @@ android {
         versionCode = 1
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // Expose the API key as a build config field
+        buildConfigField("String", "GEMINI_API_KEY", "\"${localProperties.getProperty("GEMINI_API_KEY")}\"")
     }
 
     buildTypes {
@@ -29,7 +42,10 @@ android {
     }
 
     // Jetpack Compose
-    buildFeatures { compose = true }
+    buildFeatures {
+        compose = true
+        buildConfig = true // Enable BuildConfig
+    }
     composeOptions { kotlinCompilerExtensionVersion = "1.5.14" }
 
     // JDK 17
@@ -67,6 +83,9 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-storage")
     implementation("com.google.android.gms:play-services-auth:21.2.0") // Google Sign-In
+
+    // ----- Gemini
+    implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
 
     // ----- Tests (explicit so they don't rely on the version catalog)
     testImplementation("junit:junit:4.13.2")
