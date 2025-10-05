@@ -12,11 +12,18 @@ class UsersRepository(
 ) {
     private val users = db.collection("users")
 
+    suspend fun signInWithEmailPassword(email: String, pass: String) {
+        auth.signInWithEmailAndPassword(email, pass).await()
+    }
+
+    suspend fun createUserWithEmailPassword(email: String, pass: String) {
+        auth.createUserWithEmailAndPassword(email, pass).await()
+        // ensureAndGetUserProfile will be called from the UI after this to create the user doc
+    }
+
     /**
      * Ensures a user document exists and returns the user's profile.
      * Creates a default profile if one doesn't exist.
-     * @return The user's profile.
-     * @throws IllegalStateException if the user is not signed in or the profile can't be parsed.
      */
     suspend fun ensureAndGetUserProfile(): UserProfile {
         val user = auth.currentUser ?: throw IllegalStateException("User not signed in")
@@ -31,19 +38,15 @@ class UsersRepository(
                 phone = user.phoneNumber,
                 role = "both" // Always default to "both" to trigger role selection
             )
-            // Set the document with the initial data
             docRef.set(newProfile).await()
-            // Immediately update with server timestamps
             docRef.update(
                 mapOf(
                     "createdAt" to FieldValue.serverTimestamp(),
                     "lastSeenAt" to FieldValue.serverTimestamp()
                 )
             ).await()
-            // Return the profile we just created
             return newProfile
         } else {
-            // Document exists, update last seen time and return the parsed object
             docRef.update("lastSeenAt", FieldValue.serverTimestamp()).await()
             return snap.toObject(UserProfile::class.java)
                 ?: throw IllegalStateException("Failed to parse user profile from Firestore.")
