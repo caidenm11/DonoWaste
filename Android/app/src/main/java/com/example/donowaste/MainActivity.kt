@@ -326,7 +326,7 @@ fun MainAppContent(
             Column {
                 Text("Welcome,", style = MaterialTheme.typography.titleLarge)
                 Text(userProfile.displayName, style = MaterialTheme.typography.titleLarge)
-                Text("Your role: ${userProfile.role}", style = MaterialTheme.typography.bodyMedium)
+                Text(userProfile.role, style = MaterialTheme.typography.bodyMedium)
             }
             Column(horizontalAlignment = Alignment.End) {
                 Button(onClick = onSwitchRole) {
@@ -352,11 +352,10 @@ fun MainAppContent(
             // Donatee Flow
             composable("donatee_home") { DonateeHomeScreen(navController) }
             composable("donations_page") { DonationsScreen() }
-            composable("pickup_page") { PickupScreen() }
+            composable("pickup_page") { PickupScreen(navController) }
             composable("package_page/{packageId}") { backStackEntry ->
                 PackageScreen(
-    //                navController = navController,
-    //                packageId = backStackEntry.arguments?.getString("packageId")
+                    packageId = backStackEntry.arguments?.getString("packageId")
                 )
             }
 
