@@ -24,7 +24,6 @@ fun DonateeHomeScreen(navController: NavController) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("Donations will appear here for you to claim.", style = MaterialTheme.typography.bodyLarge)
         Spacer(Modifier.height(16.dp))
         Button(onClick = { navController.navigate("donations_page") }) {
             Text("Donations")
